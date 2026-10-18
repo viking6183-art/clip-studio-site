@@ -14,39 +14,64 @@
     <a class="brand" href="index.html"><span class="dot"></span>Clip Studio</a>
   </header>
   <main>
-    <section class="card" id="ok">
+    <section class="card" id="fb" hidden>
+      <h1>Facebook token ready</h1>
+      <p class="lead">Copy this token and continue with the setup steps: extend it in the Access Token Tool, then use it
+        in the Graph API Explorer.</p>
+      <span class="url" id="token"></span>
+      <button class="btn" id="copytoken" type="button">Copy token</button>
+      <p class="meta" style="margin-top:14px" id="expiry"></p>
+    </section>
+    <section class="card" id="ok" hidden>
       <h1>Almost done</h1>
-      <p class="lead">Copy this address, paste it into Clip Studio (Accounts → TikTok), and press <strong>Finish</strong>.</p>
+      <p class="lead">Copy this address, paste it into Clip Studio's paste box, and press <strong>Finish</strong>.</p>
       <span class="url" id="addr"></span>
-      <button class="btn" id="copy" type="button">Copy address</button>
-      <p class="meta" style="margin-top:14px">This page doesn't send the address anywhere. It only shows it so you can
-        copy it.</p>
+      <button class="btn" id="copyaddr" type="button">Copy address</button>
     </section>
     <section class="card" id="err" hidden>
       <h1>Sign-in didn't complete</h1>
       <p class="lead" id="errmsg"></p>
-      <p>Go back to Clip Studio and press <strong>Open TikTok login</strong> to try again.</p>
+      <p>Go back and start the sign-in again.</p>
     </section>
+    <p class="meta">This page doesn't send anything anywhere. It only shows what the sign-in returned, so you can copy
+      it.</p>
   </main>
 </div>
 <script>
   (function () {
     var q = new URLSearchParams(location.search);
-    if (q.get("error")) {
-      document.getElementById("ok").hidden = true;
-      document.getElementById("err").hidden = false;
+    var h = new URLSearchParams(location.hash.replace(/^#/, ""));  // Facebook returns tokens after "#"
+    function show(id) { document.getElementById(id).hidden = false; }
+    function copier(btnId, text) {
+      var btn = document.getElementById(btnId);
+      btn.addEventListener("click", function () {
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(text).then(function () { btn.textContent = "Copied"; }, function () {});
+        }
+      });
+    }
+    var error = q.get("error") || h.get("error");
+    if (error) {
+      show("err");
       document.getElementById("errmsg").textContent =
-        (q.get("error_description") || q.get("error")) + ".";
+        (q.get("error_description") || h.get("error_description") || q.get("error_reason") || error) + ".";
       return;
     }
+    var token = h.get("access_token");
+    if (token) {
+      show("fb");
+      document.getElementById("token").textContent = token;
+      var secs = parseInt(h.get("expires_in") || "0", 10);
+      document.getElementById("expiry").textContent = secs
+        ? "This short-lived token expires in about " + Math.round(secs / 60) + " minutes, so extend it soon."
+        : "";
+      copier("copytoken", token);
+      history.replaceState(null, "", location.pathname);  // take the token out of the address bar
+      return;
+    }
+    show("ok");
     document.getElementById("addr").textContent = location.href;
-    var btn = document.getElementById("copy");
-    btn.addEventListener("click", function () {
-      var done = function () { btn.textContent = "Copied"; };
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(location.href).then(done, function () {});
-      }
-    });
+    copier("copyaddr", location.href);
   })();
 </script>
 </body>
