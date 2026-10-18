@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>Finish Sign-in</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="brand" href="index.html"><span class="dot"></span>Clip Studio</a>
+  </header>
+  <main>
+    <section class="card" id="ok">
+      <h1>Almost done</h1>
+      <p class="lead">Copy this address, paste it into Clip Studio (Accounts → TikTok), and press <strong>Finish</strong>.</p>
+      <span class="url" id="addr"></span>
+      <button class="btn" id="copy" type="button">Copy address</button>
+      <p class="meta" style="margin-top:14px">This page doesn't send the address anywhere. It only shows it so you can
+        copy it.</p>
+    </section>
+    <section class="card" id="err" hidden>
+      <h1>Sign-in didn't complete</h1>
+      <p class="lead" id="errmsg"></p>
+      <p>Go back to Clip Studio and press <strong>Open TikTok login</strong> to try again.</p>
+    </section>
+  </main>
+</div>
+<script>
+  (function () {
+    var q = new URLSearchParams(location.search);
+    if (q.get("error")) {
+      document.getElementById("ok").hidden = true;
+      document.getElementById("err").hidden = false;
+      document.getElementById("errmsg").textContent =
+        (q.get("error_description") || q.get("error")) + ".";
+      return;
+    }
+    document.getElementById("addr").textContent = location.href;
+    var btn = document.getElementById("copy");
+    btn.addEventListener("click", function () {
+      var done = function () { btn.textContent = "Copied"; };
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(location.href).then(done, function () {});
+      }
+    });
+  })();
+</script>
+</body>
+</html>
